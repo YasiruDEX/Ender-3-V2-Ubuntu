@@ -117,10 +117,14 @@ class PrinterController:
         time.sleep(1)
         return self.connect(self.port)
     
-    def send_command(self, command: str, wait_for_ok: bool = True, timeout: float = 30) -> tuple[bool, str]:
+    def send_command(self, command: str, wait_for_ok: bool = True, timeout: float = 10) -> tuple[bool, str]:
         """Send a G-code command with robust error handling"""
         if not self.connected or not self.serial:
             return False, "Not connected"
+        
+        # Check stop flag before sending
+        if self.stop_flag:
+            return False, "Stopped"
         
         try:
             command = command.strip()
@@ -136,6 +140,10 @@ class PrinterController:
             start_time = time.time()
             
             while time.time() - start_time < timeout:
+                # Check stop flag frequently during wait
+                if self.stop_flag:
+                    return False, "Stopped"
+                
                 try:
                     if self.serial.in_waiting:
                         line = self.serial.readline().decode('utf-8', errors='ignore').strip()
@@ -154,7 +162,7 @@ class PrinterController:
                 except OSError as e:
                     # USB disconnected - try to reconnect
                     self.last_error = f"USB Error: {e}"
-                    if self.reconnect():
+                    if not self.stop_flag and self.reconnect():
                         return self.send_command(command, wait_for_ok, timeout)
                     return False, str(e)
             
@@ -260,13 +268,13 @@ class PrinterController:
         reconnect_attempts = 0
         max_reconnect_attempts = 5
         
-        while self.current_line < self.total_lines and not self.stop_flag:
-            # Check stop flag frequently
+        while self.current_line < self.total_lines:
+            # Check stop flag at the start of every iteration
             if self.stop_flag:
                 break
                 
             if self.paused:
-                time.sleep(0.1)
+                time.sleep(0.05)  # Shorter sleep for faster response
                 continue
             
             line = self.gcode_lines[self.current_line]
@@ -278,25 +286,33 @@ class PrinterController:
                 # Check stop flag before sending
                 if self.stop_flag:
                     break
-                success, response = self.send_command(command, timeout=30)  # Reduced timeout
+                    
+                success, response = self.send_command(command, timeout=10)  # Shorter timeout
+                
+                # Check stop flag after command
+                if self.stop_flag:
+                    break
                 
                 if not success:
+                    if self.stop_flag:
+                        break
+                    if 'Stopped' in response:
+                        break
                     if 'USB' in self.last_error or 'Error' in self.last_error:
                         reconnect_attempts += 1
                         if reconnect_attempts >= max_reconnect_attempts:
                             self.last_error = "Too many connection errors, stopping print"
                             break
-                        time.sleep(2)
-                        if self.reconnect():
+                        time.sleep(1)  # Shorter wait
+                        if not self.stop_flag and self.reconnect():
                             continue  # Retry the same line
-                    else:
-                        # Non-fatal error, continue
-                        pass
+                    # Non-fatal error, continue
                 else:
                     reconnect_attempts = 0
             
             self.current_line += 1
-            self.progress = int((self.current_line / self.total_lines) * 100)
+            if self.total_lines > 0:
+                self.progress = int((self.current_line / self.total_lines) * 100)
             
             if self.status_callback:
                 self.status_callback({
@@ -330,27 +346,32 @@ class PrinterController:
             self.paused = False
     
     def stop_print(self):
-        """Stop the current print - non-blocking"""
+        """Stop the current print - IMMEDIATE and non-blocking"""
+        # Set flag FIRST - this will interrupt the print loop immediately
         self.stop_flag = True
         self.paused = False
         self.printing = False
+        self.progress = 0
+        self.current_line = 0
         
-        # Don't wait for thread, just let it die
-        # Run cleanup in background thread to not block
-        def cleanup():
-            if self.connected and self.serial:
-                try:
-                    # Send emergency stop commands without waiting
+        # Send emergency stop commands directly - don't wait for response
+        def emergency_stop():
+            try:
+                if self.serial and self.serial.is_open:
+                    # Clear any pending data
+                    self.serial.reset_input_buffer()
+                    self.serial.reset_output_buffer()
+                    # Send emergency commands - use short writes, no waiting
+                    self.serial.write(b'M108\n')  # Break out of wait for heat
                     self.serial.write(b'M104 S0\n')  # Hotend off
-                    time.sleep(0.1)
-                    self.serial.write(b'M140 S0\n')  # Bed off
-                    time.sleep(0.1)
+                    self.serial.write(b'M140 S0\n')  # Bed off  
                     self.serial.write(b'M84\n')  # Disable motors
-                except:
-                    pass
+                    self.serial.flush()
+            except:
+                pass
         
-        cleanup_thread = threading.Thread(target=cleanup, daemon=True)
-        cleanup_thread.start()
+        # Run in background thread so we return immediately
+        threading.Thread(target=emergency_stop, daemon=True).start()
     
     def home(self):
         """Home all axes"""
