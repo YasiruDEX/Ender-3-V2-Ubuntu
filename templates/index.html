@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ender 3 V2 Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect fill='%230071e3' width='24' height='24' rx='4'/></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-card: #ffffff;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
+            --success: #34c759;
+            --warning: #ff9500;
+            --danger: #ff3b30;
+            --border: #d2d2d7;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --radius: 18px;
+            --radius-sm: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), #5856d6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+        }
+
+        .status-dot.printing {
+            background: var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Content */
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Camera Feed */
+        .camera-container {
+            position: relative;
+            background: #000;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            aspect-ratio: 16/9;
+        }
+
+        .camera-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .camera-status {
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--danger);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .live-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Temperature Display */
+        .temp-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .temp-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .temp-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .temp-value {
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: -1px;
+        }
+
+        .temp-value span {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .temp-target {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            margin-bottom: 24px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .progress-label {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .progress-percent {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #5856d6);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 980px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8ed;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2db84d;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e6362b;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 50%;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* File Upload */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent);
+            background: rgba(0, 113, 227, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(0, 113, 227, 0.1);
+        }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent);
+        }
+
+        .upload-text {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .file-details {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .file-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Control Panel */
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .control-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: #e8e8ed;
+            transform: translateY(-2px);
+        }
+
+        .control-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-primary);
+        }
+
+        .control-btn span {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        /* Notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            background: var(--text-primary);
+            color: white;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .temp-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .control-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"/></svg>
+                </div>
+                <span class="logo-text">Ender 3 V2 Dashboard</span>
+            </div>
+            <div class="status-badge" id="connectionStatus">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Disconnected</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="grid">
+            <!-- Left Column - Camera & Progress -->
+            <div class="left-column">
+                <!-- Camera Feed -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h2 class="card-title">Live Camera</h2>
+                        <span class="live-badge">LIVE</span>
+                    </div>
+                    <div class="card-body" style="padding: 16px;">
+                        <div class="camera-container">
+                            <img src="/video_feed" alt="Camera Feed" class="camera-feed" id="cameraFeed">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Print Progress -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Print Progress</h2>
+                        <span id="printStatus" style="font-size: 13px; color: var(--text-secondary);">Idle</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress-section">
+                            <div class="progress-header">
+                                <span class="progress-label">Overall Progress</span>
+                                <span class="progress-percent" id="progressPercent">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                            </div>
+                            <div class="progress-info">
+                                <span id="linesInfo">0 / 0 lines</span>
+                                <span id="timeInfo">--:--:--</span>
+                            </div>
+                        </div>
+
+                        <!-- Control Buttons -->
+                        <div class="btn-group" style="justify-content: center;">
+                            <button class="btn btn-success" id="startBtn" onclick="startPrint()" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                Start
+                            </button>
+                            <button class="btn btn-warning" id="pauseBtn" onclick="togglePause()" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                Pause
+                            </button>
+                            <button class="btn btn-danger" id="stopBtn" onclick="stopPrint()" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+                                Stop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Controls -->
+            <div class="right-column">
+                <!-- Connection -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h2 class="card-title">Connection</h2>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary" id="connectBtn" onclick="toggleConnection()" style="width: 100%;">
+                            Connect Printer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Temperature -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h2 class="card-title">Temperature</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="temp-grid">
+                            <div class="temp-card">
+                                <div class="temp-label">Bed</div>
+                                <div class="temp-value"><span id="bedTemp">0</span>°C</div>
+                                <div class="temp-target">Target: <span id="bedTarget">0</span>°C</div>
+                            </div>
+                            <div class="temp-card">
+                                <div class="temp-label">Hotend</div>
+                                <div class="temp-value"><span id="hotendTemp">0</span>°C</div>
+                                <div class="temp-target">Target: <span id="hotendTarget">0</span>°C</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Upload -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h2 class="card-title">G-Code File</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                            <div class="upload-icon">
+                                <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+                            </div>
+                            <div class="upload-text">Click to upload or drag and drop</div>
+                            <div class="upload-hint">.gcode files only</div>
+                        </div>
+                        <input type="file" id="fileInput" class="file-input" accept=".gcode,.g" onchange="handleFileUpload(event)">
+                        
+                        <div class="file-info" id="fileInfo" style="display: none;">
+                            <div class="file-icon">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                            </div>
+                            <div class="file-details">
+                                <div class="file-name" id="fileName">-</div>
+                                <div class="file-meta" id="fileMeta">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Controls -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Quick Controls</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="control-grid">
+                            <button class="control-btn" onclick="sendCommand('G28')">
+                                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                                <span>Home</span>
+                            </button>
+                            <button class="control-btn" onclick="sendCommand('M104 S200')">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                                <span>Preheat</span>
+                            </button>
+                            <button class="control-btn" onclick="coolDown()">
+                                <svg viewBox="0 0 24 24"><path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"/></svg>
+                                <span>Cool Down</span>
+                            </button>
+                            <button class="control-btn" onclick="sendCommand('M84')">
+                                <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+                                <span>Motors Off</span>
+                            </button>
+                            <button class="control-btn" onclick="sendCommand('G1 Z10 F300')">
+                                <svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z"/></svg>
+                                <span>Z Up</span>
+                            </button>
+                            <button class="control-btn" onclick="sendCommand('G1 Z-10 F300')">
+                                <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                                <span>Z Down</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // State
+        let isConnected = false;
+        let isPrinting = false;
+        let isPaused = false;
+        let fileLoaded = false;
+
+        // DOM Elements
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const connectBtn = document.getElementById('connectBtn');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressFill = document.getElementById('progressFill');
+        const linesInfo = document.getElementById('linesInfo');
+        const printStatus = document.getElementById('printStatus');
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // API calls
+        async function api(endpoint, method = 'GET', body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                if (body) {
+                    options.body = JSON.stringify(body);
+                } else if (method === 'POST') {
+                    options.body = '{}';
+                }
+                const response = await fetch('/api/' + endpoint, options);
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                return { success: false, message: error.message };
+            }
+        }
+
+        // Connection
+        async function toggleConnection() {
+            if (isConnected) {
+                const result = await api('disconnect', 'POST');
+                if (result.success) {
+                    isConnected = false;
+                    updateConnectionUI();
+                    showToast('Disconnected from printer');
+                }
+            } else {
+                connectBtn.innerHTML = '<span class="spinner"></span> Connecting...';
+                connectBtn.disabled = true;
+                
+                const result = await api('connect', 'POST');
+                
+                if (result.success) {
+                    isConnected = true;
+                    showToast('Connected to printer!', 'success');
+                } else {
+                    showToast(result.message || 'Connection failed', 'error');
+                }
+                updateConnectionUI();
+            }
+        }
+
+        function updateConnectionUI() {
+            if (isConnected) {
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Connected';
+                connectBtn.textContent = 'Disconnect';
+                connectBtn.classList.remove('btn-primary');
+                connectBtn.classList.add('btn-danger');
+            } else {
+                statusDot.classList.remove('connected', 'printing');
+                statusText.textContent = 'Disconnected';
+                connectBtn.textContent = 'Connect Printer';
+                connectBtn.classList.remove('btn-danger');
+                connectBtn.classList.add('btn-primary');
+            }
+            connectBtn.disabled = false;
+            updateButtons();
+        }
+
+        // File upload
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showToast('Uploading file...');
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    fileLoaded = true;
+                    document.getElementById('fileInfo').style.display = 'flex';
+                    document.getElementById('uploadZone').style.display = 'none';
+                    document.getElementById('fileName').textContent = result.filename;
+                    document.getElementById('fileMeta').textContent = result.lines + ' lines';
+                    showToast('File loaded successfully!', 'success');
+                    updateButtons();
+                } else {
+                    showToast(result.message || 'Upload failed', 'error');
+                }
+            } catch (error) {
+                showToast('Upload failed: ' + error.message, 'error');
+            }
+        }
+
+        // Drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                document.getElementById('fileInput').files = e.dataTransfer.files;
+                handleFileUpload({ target: { files: [file] } });
+            }
+        });
+
+        // Print controls
+        async function startPrint() {
+            const result = await api('start', 'POST');
+            if (result.success) {
+                isPrinting = true;
+                isPaused = false;
+                showToast('Print started!', 'success');
+                updateButtons();
+            } else {
+                showToast(result.message || 'Failed to start print', 'error');
+            }
+        }
+
+        async function togglePause() {
+            if (isPaused) {
+                const result = await api('resume', 'POST');
+                if (result.success) {
+                    isPaused = false;
+                    showToast('Print resumed');
+                }
+            } else {
+                const result = await api('pause', 'POST');
+                if (result.success) {
+                    isPaused = true;
+                    showToast('Print paused');
+                }
+            }
+            updateButtons();
+        }
+
+        async function stopPrint() {
+            if (confirm('Are you sure you want to stop the print?')) {
+                const result = await api('stop', 'POST');
+                if (result.success) {
+                    isPrinting = false;
+                    isPaused = false;
+                    showToast('Print stopped');
+                    updateButtons();
+                }
+            }
+        }
+
+        async function sendCommand(cmd) {
+            if (!isConnected) {
+                showToast('Printer not connected', 'error');
+                return;
+            }
+            const result = await api('command', 'POST', { command: cmd });
+            if (!result.success) {
+                showToast('Command failed', 'error');
+            }
+        }
+
+        async function coolDown() {
+            await sendCommand('M104 S0');
+            await sendCommand('M140 S0');
+            showToast('Cooling down...');
+        }
+
+        function updateButtons() {
+            startBtn.disabled = !isConnected || !fileLoaded || isPrinting;
+            pauseBtn.disabled = !isPrinting;
+            stopBtn.disabled = !isPrinting;
+            
+            pauseBtn.innerHTML = isPaused ? 
+                '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Resume' :
+                '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Pause';
+
+            if (isPrinting) {
+                statusDot.classList.add('printing');
+                printStatus.textContent = isPaused ? 'Paused' : 'Printing...';
+            } else {
+                statusDot.classList.remove('printing');
+                printStatus.textContent = 'Idle';
+            }
+        }
+
+        // Status polling
+        async function pollStatus() {
+            try {
+                const status = await api('status');
+                
+                isConnected = status.connected;
+                isPrinting = status.printing;
+                isPaused = status.paused;
+
+                // Update temperature
+                document.getElementById('bedTemp').textContent = Math.round(status.temperature.bed);
+                document.getElementById('bedTarget').textContent = Math.round(status.temperature.bed_target);
+                document.getElementById('hotendTemp').textContent = Math.round(status.temperature.hotend);
+                document.getElementById('hotendTarget').textContent = Math.round(status.temperature.hotend_target);
+
+                // Update progress
+                progressPercent.textContent = status.progress + '%';
+                progressFill.style.width = status.progress + '%';
+                linesInfo.textContent = status.current_line + ' / ' + status.total_lines + ' lines';
+
+                updateConnectionUI();
+                updateButtons();
+            } catch (error) {
+                console.error('Status poll error:', error);
+            }
+        }
+
+        // Initialize
+        pollStatus();
+        setInterval(pollStatus, 1000);
+    </script>
+</body>
+</html>
