@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ender 3 V2 Dashboard</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect fill='%230071e3' width='24' height='24' rx='4'/></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect fill='%230071e3' width='24' height='24' rx='4'/></svg>">
     <style>
         * {
             margin: 0;
@@ -114,8 +116,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
         /* Main Content */
@@ -189,7 +198,7 @@
             left: 0;
             right: 0;
             padding: 16px;
-            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -572,8 +581,15 @@
 
         /* Animations */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .card {
@@ -591,17 +607,23 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
         <div class="header-content">
             <div class="logo">
                 <div class="logo-icon">
-                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"/></svg>
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z" />
+                    </svg>
                 </div>
                 <span class="logo-text">Ender 3 V2 Dashboard</span>
             </div>
@@ -654,15 +676,21 @@
                         <!-- Control Buttons -->
                         <div class="btn-group" style="justify-content: center;">
                             <button class="btn btn-success" id="startBtn" onclick="startPrint()" disabled>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
                                 Start
                             </button>
                             <button class="btn btn-warning" id="pauseBtn" onclick="togglePause()" disabled>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                                </svg>
                                 Pause
                             </button>
                             <button class="btn btn-danger" id="stopBtn" onclick="stopPrint()" disabled>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M6 6h12v12H6z" />
+                                </svg>
                                 Stop
                             </button>
                         </div>
@@ -678,7 +706,8 @@
                         <h2 class="card-title">Connection</h2>
                     </div>
                     <div class="card-body">
-                        <button class="btn btn-primary" id="connectBtn" onclick="toggleConnection()" style="width: 100%;">
+                        <button class="btn btn-primary" id="connectBtn" onclick="toggleConnection()"
+                            style="width: 100%;">
                             Connect Printer
                         </button>
                     </div>
@@ -695,12 +724,33 @@
                                 <div class="temp-label">Bed</div>
                                 <div class="temp-value"><span id="bedTemp">0</span>°C</div>
                                 <div class="temp-target">Target: <span id="bedTarget">0</span>°C</div>
+                                <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+                                    <input type="number" id="bedTempInput" placeholder="60" min="0" max="110" 
+                                        style="width: 70px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; text-align: center;">
+                                    <button onclick="setTemp('bed')" class="btn btn-primary" style="padding: 8px 12px; font-size: 13px;">Set</button>
+                                </div>
                             </div>
                             <div class="temp-card">
                                 <div class="temp-label">Hotend</div>
                                 <div class="temp-value"><span id="hotendTemp">0</span>°C</div>
                                 <div class="temp-target">Target: <span id="hotendTarget">0</span>°C</div>
+                                <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+                                    <input type="number" id="hotendTempInput" placeholder="200" min="0" max="260" 
+                                        style="width: 70px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; text-align: center;">
+                                    <button onclick="setTemp('hotend')" class="btn btn-primary" style="padding: 8px 12px; font-size: 13px;">Set</button>
+                                </div>
                             </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; margin-top: 16px;">
+                            <button onclick="preheatPLA()" class="btn btn-secondary" style="flex: 1; font-size: 13px;">
+                                PLA (200/60)
+                            </button>
+                            <button onclick="preheatPETG()" class="btn btn-secondary" style="flex: 1; font-size: 13px;">
+                                PETG (230/70)
+                            </button>
+                            <button onclick="coolDown()" class="btn btn-danger" style="flex: 1; font-size: 13px;">
+                                Cool Down
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -713,16 +763,22 @@
                     <div class="card-body">
                         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
                             <div class="upload-icon">
-                                <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z" />
+                                </svg>
                             </div>
                             <div class="upload-text">Click to upload or drag and drop</div>
                             <div class="upload-hint">.gcode files only</div>
                         </div>
-                        <input type="file" id="fileInput" class="file-input" accept=".gcode,.g" onchange="handleFileUpload(event)">
-                        
+                        <input type="file" id="fileInput" class="file-input" accept=".gcode,.g"
+                            onchange="handleFileUpload(event)">
+
                         <div class="file-info" id="fileInfo" style="display: none;">
                             <div class="file-icon">
-                                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                                </svg>
                             </div>
                             <div class="file-details">
                                 <div class="file-name" id="fileName">-</div>
@@ -740,27 +796,42 @@
                     <div class="card-body">
                         <div class="control-grid">
                             <button class="control-btn" onclick="sendCommand('G28')">
-                                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                                </svg>
                                 <span>Home</span>
                             </button>
                             <button class="control-btn" onclick="sendCommand('M104 S200')">
-                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                </svg>
                                 <span>Preheat</span>
                             </button>
                             <button class="control-btn" onclick="coolDown()">
-                                <svg viewBox="0 0 24 24"><path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"/></svg>
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z" />
+                                </svg>
                                 <span>Cool Down</span>
                             </button>
                             <button class="control-btn" onclick="sendCommand('M84')">
-                                <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z" />
+                                </svg>
                                 <span>Motors Off</span>
                             </button>
                             <button class="control-btn" onclick="sendCommand('G1 Z10 F300')">
-                                <svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z"/></svg>
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M7 14l5-5 5 5z" />
+                                </svg>
                                 <span>Z Up</span>
                             </button>
                             <button class="control-btn" onclick="sendCommand('G1 Z-10 F300')">
-                                <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M7 10l5 5 5-5z" />
+                                </svg>
                                 <span>Z Down</span>
                             </button>
                         </div>
@@ -832,9 +903,9 @@
             } else {
                 connectBtn.innerHTML = '<span class="spinner"></span> Connecting...';
                 connectBtn.disabled = true;
-                
+
                 const result = await api('connect', 'POST');
-                
+
                 if (result.success) {
                     isConnected = true;
                     showToast('Connected to printer!', 'success');
@@ -946,15 +1017,36 @@
         }
 
         async function stopPrint() {
-            if (confirm('Are you sure you want to stop the print?')) {
-                const result = await api('stop', 'POST');
-                if (result.success) {
-                    isPrinting = false;
-                    isPaused = false;
-                    showToast('Print stopped');
-                    updateButtons();
-                }
+            stopBtn.disabled = true;
+            stopBtn.innerHTML = '<span class="spinner"></span> Stopping...';
+            
+            try {
+                // Use fetch with timeout to prevent hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch('/api/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{}',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                const result = await response.json();
+                
+                isPrinting = false;
+                isPaused = false;
+                showToast('Print stopped', 'success');
+            } catch (error) {
+                // Even if request fails/times out, update UI
+                isPrinting = false;
+                isPaused = false;
+                showToast('Stop command sent', 'success');
             }
+            
+            stopBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg> Stop';
+            updateButtons();
         }
 
         async function sendCommand(cmd) {
@@ -968,18 +1060,65 @@
             }
         }
 
+        async function setTemp(type) {
+            if (!isConnected) {
+                showToast('Printer not connected', 'error');
+                return;
+            }
+            
+            if (type === 'bed') {
+                const temp = document.getElementById('bedTempInput').value || 0;
+                await sendCommand(`M140 S${temp}`);
+                showToast(`Bed target set to ${temp}°C`);
+            } else if (type === 'hotend') {
+                const temp = document.getElementById('hotendTempInput').value || 0;
+                await sendCommand(`M104 S${temp}`);
+                showToast(`Hotend target set to ${temp}°C`);
+            }
+        }
+
+        async function preheatPLA() {
+            if (!isConnected) {
+                showToast('Printer not connected', 'error');
+                return;
+            }
+            await sendCommand('M104 S200');
+            await sendCommand('M140 S60');
+            document.getElementById('hotendTempInput').value = 200;
+            document.getElementById('bedTempInput').value = 60;
+            showToast('Preheating for PLA (200°C / 60°C)', 'success');
+        }
+
+        async function preheatPETG() {
+            if (!isConnected) {
+                showToast('Printer not connected', 'error');
+                return;
+            }
+            await sendCommand('M104 S230');
+            await sendCommand('M140 S70');
+            document.getElementById('hotendTempInput').value = 230;
+            document.getElementById('bedTempInput').value = 70;
+            showToast('Preheating for PETG (230°C / 70°C)', 'success');
+        }
+
         async function coolDown() {
+            if (!isConnected) {
+                showToast('Printer not connected', 'error');
+                return;
+            }
             await sendCommand('M104 S0');
             await sendCommand('M140 S0');
-            showToast('Cooling down...');
+            document.getElementById('hotendTempInput').value = '';
+            document.getElementById('bedTempInput').value = '';
+            showToast('Cooling down...', 'success');
         }
 
         function updateButtons() {
             startBtn.disabled = !isConnected || !fileLoaded || isPrinting;
             pauseBtn.disabled = !isPrinting;
             stopBtn.disabled = !isPrinting;
-            
-            pauseBtn.innerHTML = isPaused ? 
+
+            pauseBtn.innerHTML = isPaused ?
                 '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Resume' :
                 '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Pause';
 
@@ -996,7 +1135,7 @@
         async function pollStatus() {
             try {
                 const status = await api('status');
-                
+
                 isConnected = status.connected;
                 isPrinting = status.printing;
                 isPaused = status.paused;
@@ -1024,4 +1163,5 @@
         setInterval(pollStatus, 1000);
     </script>
 </body>
+
 </html>

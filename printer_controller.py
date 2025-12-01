@@ -167,20 +167,29 @@ class PrinterController:
     def _parse_temperature(self, line: str):
         """Parse temperature from response"""
         try:
-            parts = line.split()
-            for part in parts:
-                if part.startswith('T:'):
-                    self.temperature["hotend"] = float(part[2:].split('/')[0])
-                elif part.startswith('T0:'):
-                    self.temperature["hotend"] = float(part[3:].split('/')[0])
-                elif part.startswith('B:'):
-                    self.temperature["bed"] = float(part[2:].split('/')[0])
-                if '/' in part:
-                    if part.startswith('T:') or part.startswith('T0:'):
-                        self.temperature["hotend_target"] = float(part.split('/')[1])
-                    elif part.startswith('B:'):
-                        self.temperature["bed_target"] = float(part.split('/')[1])
-        except:
+            # Parse format: T:200.00 /200.00 B:60.00 /60.00
+            import re
+            
+            # Match hotend temp: T:xxx.xx or T:xxx.xx /xxx.xx
+            hotend_match = re.search(r'T:([\d.]+)\s*/\s*([\d.]+)', line)
+            if hotend_match:
+                self.temperature["hotend"] = float(hotend_match.group(1))
+                self.temperature["hotend_target"] = float(hotend_match.group(2))
+            else:
+                hotend_match = re.search(r'T:([\d.]+)', line)
+                if hotend_match:
+                    self.temperature["hotend"] = float(hotend_match.group(1))
+            
+            # Match bed temp: B:xxx.xx or B:xxx.xx /xxx.xx
+            bed_match = re.search(r'B:([\d.]+)\s*/\s*([\d.]+)', line)
+            if bed_match:
+                self.temperature["bed"] = float(bed_match.group(1))
+                self.temperature["bed_target"] = float(bed_match.group(2))
+            else:
+                bed_match = re.search(r'B:([\d.]+)', line)
+                if bed_match:
+                    self.temperature["bed"] = float(bed_match.group(1))
+        except Exception as e:
             pass
     
     def _start_temp_monitoring(self):
@@ -252,6 +261,10 @@ class PrinterController:
         max_reconnect_attempts = 5
         
         while self.current_line < self.total_lines and not self.stop_flag:
+            # Check stop flag frequently
+            if self.stop_flag:
+                break
+                
             if self.paused:
                 time.sleep(0.1)
                 continue
@@ -262,7 +275,10 @@ class PrinterController:
             command = line.split(';')[0].strip()
             
             if command:
-                success, response = self.send_command(command, timeout=120)
+                # Check stop flag before sending
+                if self.stop_flag:
+                    break
+                success, response = self.send_command(command, timeout=30)  # Reduced timeout
                 
                 if not success:
                     if 'USB' in self.last_error or 'Error' in self.last_error:
@@ -314,27 +330,27 @@ class PrinterController:
             self.paused = False
     
     def stop_print(self):
-        """Stop the current print"""
+        """Stop the current print - non-blocking"""
         self.stop_flag = True
         self.paused = False
-        
-        if self.print_thread:
-            self.print_thread.join(timeout=5)
-        
         self.printing = False
         
-        # Cool down and disable motors
-        if self.connected and self.serial:
-            try:
-                self.send_command('M104 S0', wait_for_ok=False)  # Hotend off
-                self.send_command('M140 S0', wait_for_ok=False)  # Bed off
-                self.send_command('G91', wait_for_ok=False)
-                self.send_command('G1 Z10 F300', wait_for_ok=False)  # Raise Z
-                self.send_command('G90', wait_for_ok=False)
-                self.send_command('G28 X Y', wait_for_ok=False)  # Home X Y
-                self.send_command('M84', wait_for_ok=False)  # Disable motors
-            except:
-                pass
+        # Don't wait for thread, just let it die
+        # Run cleanup in background thread to not block
+        def cleanup():
+            if self.connected and self.serial:
+                try:
+                    # Send emergency stop commands without waiting
+                    self.serial.write(b'M104 S0\n')  # Hotend off
+                    time.sleep(0.1)
+                    self.serial.write(b'M140 S0\n')  # Bed off
+                    time.sleep(0.1)
+                    self.serial.write(b'M84\n')  # Disable motors
+                except:
+                    pass
+        
+        cleanup_thread = threading.Thread(target=cleanup, daemon=True)
+        cleanup_thread.start()
     
     def home(self):
         """Home all axes"""
