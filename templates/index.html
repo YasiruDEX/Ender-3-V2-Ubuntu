@@ -725,9 +725,10 @@
                                 <div class="temp-value"><span id="bedTemp">0</span>°C</div>
                                 <div class="temp-target">Target: <span id="bedTarget">0</span>°C</div>
                                 <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
-                                    <input type="number" id="bedTempInput" placeholder="60" min="0" max="110" 
+                                    <input type="number" id="bedTempInput" placeholder="60" min="0" max="110"
                                         style="width: 70px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; text-align: center;">
-                                    <button onclick="setTemp('bed')" class="btn btn-primary" style="padding: 8px 12px; font-size: 13px;">Set</button>
+                                    <button onclick="setTemp('bed')" class="btn btn-primary"
+                                        style="padding: 8px 12px; font-size: 13px;">Set</button>
                                 </div>
                             </div>
                             <div class="temp-card">
@@ -735,9 +736,10 @@
                                 <div class="temp-value"><span id="hotendTemp">0</span>°C</div>
                                 <div class="temp-target">Target: <span id="hotendTarget">0</span>°C</div>
                                 <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
-                                    <input type="number" id="hotendTempInput" placeholder="200" min="0" max="260" 
+                                    <input type="number" id="hotendTempInput" placeholder="200" min="0" max="260"
                                         style="width: 70px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; text-align: center;">
-                                    <button onclick="setTemp('hotend')" class="btn btn-primary" style="padding: 8px 12px; font-size: 13px;">Set</button>
+                                    <button onclick="setTemp('hotend')" class="btn btn-primary"
+                                        style="padding: 8px 12px; font-size: 13px;">Set</button>
                                 </div>
                             </div>
                         </div>
@@ -1019,22 +1021,22 @@
         async function stopPrint() {
             stopBtn.disabled = true;
             stopBtn.innerHTML = '<span class="spinner"></span> Stopping...';
-            
+
             try {
                 // Use fetch with timeout to prevent hanging
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
-                
+
                 const response = await fetch('/api/stop', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: '{}',
                     signal: controller.signal
                 });
-                
+
                 clearTimeout(timeoutId);
                 const result = await response.json();
-                
+
                 isPrinting = false;
                 isPaused = false;
                 showToast('Print stopped', 'success');
@@ -1044,7 +1046,7 @@
                 isPaused = false;
                 showToast('Stop command sent', 'success');
             }
-            
+
             stopBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg> Stop';
             updateButtons();
         }
@@ -1065,7 +1067,7 @@
                 showToast('Printer not connected', 'error');
                 return;
             }
-            
+
             if (type === 'bed') {
                 const temp = document.getElementById('bedTempInput').value || 0;
                 await sendCommand(`M140 S${temp}`);
